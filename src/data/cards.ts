@@ -1,0 +1,38 @@
+import type { Card } from '../types'
+
+export const CHANCE_CARDS: Omit<Card, 'type'>[] = [
+  { id: 1, title: '银行发放红利', description: '银行多付你 $500 红利', action: 'collect', value: 500 },
+  { id: 2, title: '修建房屋', description: '每栋房屋支付 $250，酒店 $1000', action: 'repair', value: 250 },
+  { id: 3, title: '前往起点', description: '直接前往起点，获得 $200', action: 'goto', value: 0 },
+  { id: 4, title: '入狱', description: '直接进入监狱，不经过起点', action: 'jail', value: 0 },
+  { id: 5, title: '减税优惠', description: '获得 $150 的退税', action: 'collect', value: 150 },
+  { id: 6, title: '医疗费用', description: '支付 $500 医疗费', action: 'pay', value: 500 },
+  { id: 7, title: '前往无人零售店', description: '前往无人零售店', action: 'goto', value: 1 },
+  { id: 8, title: '生日快乐', description: '每位玩家给你 $100', action: 'birthday', value: 100 },
+  { id: 9, title: '交通罚款', description: '支付 $200 交通罚款', action: 'pay', value: 200 },
+  { id: 10, title: '股票分红', description: '获得 $1000 股票分红', action: 'collect', value: 1000 },
+  { id: 11, title: '后退三步', description: '后退三步', action: 'move_back', value: 3 },
+  { id: 12, title: '前往监狱探访', description: '前往监狱探访朋友', action: 'goto', value: 26 },
+]
+
+export const CHEST_CARDS: Omit<Card, 'type'>[] = [
+  { id: 101, title: '银行结算错误', description: '银行多付你 $200', action: 'collect', value: 200 },
+  { id: 102, title: '彩票中奖', description: '恭喜中奖 $1000！', action: 'collect', value: 1000 },
+  { id: 103, title: '医院账单', description: '支付 $1000 医院费用', action: 'pay', value: 1000 },
+  { id: 104, title: '遗产继承', description: '继承 $500 遗产', action: 'collect', value: 500 },
+  { id: 105, title: '保险赔付', description: '获得 $200 保险赔偿', action: 'collect', value: 200 },
+  { id: 106, title: '房屋维修', description: '每栋房屋支付 $400，酒店 $1150', action: 'repair', value: 400 },
+  { id: 107, title: '教育基金', description: '支付 $500 教育基金', action: 'pay', value: 500 },
+  { id: 108, title: '年终奖金', description: '获得 $800 年终奖金', action: 'collect', value: 800 },
+  { id: 109, title: '入狱', description: '直接进入监狱', action: 'jail', value: 0 },
+  { id: 110, title: '投资收益', description: '获得 $300 投资收益', action: 'collect', value: 300 },
+  { id: 111, title: '前往起点', description: '前往起点获得 $200', action: 'goto', value: 0 },
+  { id: 112, title: '慈善捐款', description: '支付 $250 慈善捐款', action: 'pay', value: 250 },
+]
+
+export function createCards(): Card[] {
+  return [
+    ...CHANCE_CARDS.map(c => ({ ...c, type: 'chance' as const })),
+    ...CHEST_CARDS.map(c => ({ ...c, type: 'chest' as const })),
+  ]
+}
