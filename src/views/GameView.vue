@@ -77,6 +77,7 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { wsService } from '../services/websocket'
 import { useGameStore } from '../stores/gameStore'
+import { useAuthStore } from '../stores/authStore'
 import GameBoard from '../components/GameBoard.vue'
 import PlayerPanel from '../components/PlayerPanel.vue'
 import ActionPanel from '../components/ActionPanel.vue'
@@ -84,6 +85,7 @@ import GameLog from '../components/GameLog.vue'
 
 const router = useRouter()
 const gameStore = useGameStore()
+const auth = useAuthStore()
 
 const currentPlayer = computed(() => gameStore.currentPlayer)
 const currentPlayerName = computed(() =>
@@ -128,6 +130,7 @@ function payJailFee() {
 function leaveGame() {
   wsService.disconnect()
   gameStore.reset()
+  auth.fetchMe()
   router.push('/')
 }
 

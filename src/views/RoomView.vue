@@ -58,9 +58,11 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { wsService } from '../services/websocket'
 import { useGameStore } from '../stores/gameStore'
+import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
 const gameStore = useGameStore()
+const auth = useAuthStore()
 
 const isHost = computed(() => gameStore.playerId === gameStore.hostId)
 
@@ -88,6 +90,7 @@ function startGame() {
 function leaveRoom() {
   wsService.disconnect()
   gameStore.reset()
+  auth.fetchMe()
   router.push('/')
 }
 

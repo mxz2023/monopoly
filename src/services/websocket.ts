@@ -96,11 +96,12 @@ class WebSocketService {
   }
 
   send(data: Record<string, any>) {
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('monopoly_token') : null
+    const payload = token ? { ...data, token } : data
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(data))
+      this.ws.send(JSON.stringify(payload))
     } else {
-      // Queue message until connection opens
-      this.pendingMessages.push(data)
+      this.pendingMessages.push(payload)
     }
   }
 

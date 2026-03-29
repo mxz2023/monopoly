@@ -1,5 +1,7 @@
 export interface Player {
   id: number
+  /** 与 id 相同，对应账户 userId */
+  userId?: number
   name: string
   avatar: string
   money: number

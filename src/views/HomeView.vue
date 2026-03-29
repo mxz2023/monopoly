@@ -5,19 +5,30 @@
         <h1 class="game-title">大富翁</h1>
         <p class="game-subtitle">MONOPOLY ONLINE</p>
 
-        <div class="form-card">
-          <div class="input-group">
-            <label>玩家昵称</label>
-            <input
-              v-model="playerName"
-              type="text"
-              placeholder="输入你的昵称"
-              maxlength="8"
-              class="input"
-              @keyup.enter="createRoom"
-            />
+        <div class="account-bar">
+          <div class="account-info">
+            <span class="account-nick">{{ auth.user?.nickname }}</span>
+            <span class="account-meta">💰 {{ auth.user?.money ?? 0 }}</span>
+            <span class="account-meta">🏠 {{ auth.user?.properties?.length ?? 0 }} 处产业</span>
           </div>
+          <div class="account-actions">
+            <button type="button" class="link-btn" @click="openNickEdit">改昵称</button>
+            <button type="button" class="link-btn logout" @click="doLogout">退出登录</button>
+          </div>
+        </div>
 
+        <div v-if="nickDialog" class="nick-dialog-overlay" @click.self="nickDialog = false">
+          <div class="nick-dialog">
+            <h3>修改游戏昵称</h3>
+            <input v-model="nickDraft" class="input" maxlength="8" placeholder="最多 8 字" @keyup.enter="saveNickname" />
+            <div class="nick-dialog-btns">
+              <button class="btn btn-secondary" type="button" @click="nickDialog = false">取消</button>
+              <button class="btn btn-primary" type="button" @click="saveNickname">保存</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
           <div class="input-group">
             <label>选择头像</label>
             <div class="avatar-grid">
@@ -34,10 +45,10 @@
           </div>
 
           <div class="btn-group">
-            <button class="btn btn-primary" @click="createRoom" :disabled="!playerName.trim()">
+            <button class="btn btn-primary" @click="createRoom">
               创建房间
             </button>
-            <button class="btn btn-secondary" @click="toggleJoin" :disabled="!playerName.trim()">
+            <button class="btn btn-secondary" @click="toggleJoin">
               加入房间
             </button>
           </div>
@@ -104,18 +115,48 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { wsService } from '../services/websocket'
 import { useGameStore } from '../stores/gameStore'
+import { useAuthStore } from '../stores/authStore'
 import { AVATARS } from '../types'
 import { getWebSocketUrl } from '../config/ws'
 
 const router = useRouter()
 const gameStore = useGameStore()
+const auth = useAuthStore()
 
-const playerName = ref(localStorage.getItem('monopoly_name') || '')
 const selectedAvatar = ref(localStorage.getItem('monopoly_avatar') || AVATARS[0])
+const nickDialog = ref(false)
+const nickDraft = ref('')
+
+onMounted(() => {
+  auth.fetchMe()
+})
+
+function openNickEdit() {
+  nickDraft.value = auth.user?.nickname ?? ''
+  nickDialog.value = true
+}
+
+async function saveNickname() {
+  const n = nickDraft.value.trim().slice(0, 8)
+  if (!n) return
+  try {
+    await auth.updateNickname(n)
+    nickDialog.value = false
+  } catch (e: unknown) {
+    alert(e instanceof Error ? e.message : '保存失败')
+  }
+}
+
+function doLogout() {
+  wsService.disconnect()
+  gameStore.reset()
+  auth.logout()
+  router.push('/login')
+}
 const roomId = ref('')
 const showJoin = ref(false)
 const roomList = ref<{ roomId: string; hostName: string; playerCount: number; maxPlayers: number; status: string }[]>([])
@@ -156,20 +197,14 @@ function quickJoin(room: { roomId: string; status: string; playerCount: number; 
 }
 
 function createRoom() {
-  if (!playerName.value.trim()) return
-  localStorage.setItem('monopoly_name', playerName.value.trim())
   localStorage.setItem('monopoly_avatar', selectedAvatar.value)
 
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const wsUrl = import.meta.env.DEV
-    ? 'ws://localhost:8080/ws'
-    : `${protocol}://${window.location.host}/ws`
-
-  wsService.connect(wsUrl)
+  wsService.connect(getWebSocketUrl())
 
   wsService.once('room_created', (data) => {
     gameStore.setPlayerId(data.playerId)
     gameStore.loadState(data)
+    auth.fetchMe()
     router.push(`/room/${data.roomId}`)
   })
 
@@ -177,12 +212,11 @@ function createRoom() {
     alert(data.message)
   })
 
-  wsService.send({ type: 'create_room', name: playerName.value.trim(), avatar: selectedAvatar.value })
+  wsService.send({ type: 'create_room', avatar: selectedAvatar.value })
 }
 
 function joinRoom() {
-  if (!playerName.value.trim() || !roomId.value.trim()) return
-  localStorage.setItem('monopoly_name', playerName.value.trim())
+  if (!roomId.value.trim()) return
   localStorage.setItem('monopoly_avatar', selectedAvatar.value)
 
   wsService.connect(getWebSocketUrl())
@@ -190,6 +224,7 @@ function joinRoom() {
   wsService.once('room_joined', (data) => {
     gameStore.setPlayerId(data.playerId)
     gameStore.loadState(data)
+    auth.fetchMe()
     router.push(`/room/${data.roomId}`)
   })
 
@@ -200,7 +235,6 @@ function joinRoom() {
   wsService.send({
     type: 'join_room',
     roomId: roomId.value.trim().toUpperCase(),
-    name: playerName.value.trim(),
     avatar: selectedAvatar.value,
   })
 }
@@ -240,7 +274,87 @@ function joinRoom() {
   color: rgba(255, 215, 0, 0.5);
   letter-spacing: 8px;
   font-size: 16px;
-  margin: 8px 0 40px;
+  margin: 8px 0 24px;
+}
+
+.account-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 10px;
+  text-align: left;
+}
+.account-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #ccc;
+}
+.account-nick {
+  color: #ffd700;
+  font-weight: 600;
+  font-size: 15px;
+}
+.account-meta {
+  color: #aaa;
+}
+.account-actions {
+  display: flex;
+  gap: 8px;
+}
+.link-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #3498db;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.link-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.link-btn.logout {
+  color: #e74c3c;
+  border-color: rgba(231, 76, 60, 0.35);
+}
+.nick-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.nick-dialog {
+  background: rgba(30, 30, 60, 0.98);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 320px;
+}
+.nick-dialog h3 {
+  margin: 0 0 12px;
+  color: #ffd700;
+  font-size: 16px;
+}
+.nick-dialog-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.nick-dialog-btns .btn {
+  flex: 1;
 }
 
 .form-card {
