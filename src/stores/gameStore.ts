@@ -12,6 +12,7 @@ export const useGameStore = defineStore('game', () => {
   const currentPlayerIndex = ref(0)
   const phase = ref('waiting')
   const dice = ref<[number, number]>([0, 0])
+  const doubleCount = ref(0)
   const logs = ref<LogEntry[]>([])
   const winner = ref<number | null>(null)
   const status = ref<'waiting' | 'playing' | 'finished'>('waiting')
@@ -62,6 +63,7 @@ export const useGameStore = defineStore('game', () => {
     if (state.currentPlayerIndex !== undefined) currentPlayerIndex.value = state.currentPlayerIndex
     if (state.phase) phase.value = state.phase
     if (state.dice) dice.value = state.dice
+    if (state.doubleCount !== undefined) doubleCount.value = state.doubleCount
     if (state.logs) logs.value = state.logs
     if (state.winner !== undefined) winner.value = state.winner
   }
@@ -80,6 +82,7 @@ export const useGameStore = defineStore('game', () => {
     currentPlayerIndex.value = 0
     phase.value = 'waiting'
     dice.value = [0, 0]
+    doubleCount.value = 0
     logs.value = []
     winner.value = null
     status.value = 'waiting'
@@ -87,7 +90,7 @@ export const useGameStore = defineStore('game', () => {
 
   return {
     roomId, hostId, playerId, players, properties, turn, currentPlayerIndex,
-    phase, dice, logs, winner, status,
+    phase, dice, doubleCount, logs, winner, status,
     currentPlayer, isMyTurn, canRoll, canAct, currentProperty, canBuy, myProperties,
     loadState, setPlayerId, reset,
   }

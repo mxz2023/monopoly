@@ -109,6 +109,7 @@ import { useRouter } from 'vue-router'
 import { wsService } from '../services/websocket'
 import { useGameStore } from '../stores/gameStore'
 import { AVATARS } from '../types'
+import { getWebSocketUrl } from '../config/ws'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -130,10 +131,7 @@ function toggleJoin() {
 
 function fetchRoomList() {
   if (listWs) listWs.close()
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const wsUrl = import.meta.env.DEV
-    ? 'ws://localhost:8080/ws'
-    : `${protocol}://${window.location.host}/ws`
+  const wsUrl = getWebSocketUrl()
 
   listWs = new WebSocket(wsUrl)
   listWs.onopen = () => {
@@ -187,12 +185,7 @@ function joinRoom() {
   localStorage.setItem('monopoly_name', playerName.value.trim())
   localStorage.setItem('monopoly_avatar', selectedAvatar.value)
 
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const wsUrl = import.meta.env.DEV
-    ? 'ws://localhost:8080/ws'
-    : `${protocol}://${window.location.host}/ws`
-
-  wsService.connect(wsUrl)
+  wsService.connect(getWebSocketUrl())
 
   wsService.once('room_joined', (data) => {
     gameStore.setPlayerId(data.playerId)

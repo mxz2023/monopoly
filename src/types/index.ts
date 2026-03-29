@@ -5,11 +5,11 @@ export interface Player {
   money: number
   position: number
   properties: number[]
-  status: 'active' | 'bankrupt' | 'jail'
+  /** 服务端仅发送 active / bankrupt；入狱状态见 inJail */
+  status: 'active' | 'bankrupt'
   jailTurns: number
   inJail: boolean
   isReady: boolean
-  isConnected: boolean
 }
 
 export interface Property {
@@ -38,12 +38,13 @@ export interface Card {
 
 export interface GameState {
   roomId: string
+  hostId: number
   status: 'waiting' | 'playing' | 'finished'
   players: Player[]
   properties: Property[]
   turn: number
   currentPlayerIndex: number
-  phase: 'roll' | 'moving' | 'action' | 'trade'
+  phase: 'waiting' | 'roll' | 'action' | 'moving' | 'trade'
   dice: [number, number]
   doubleCount: number
   logs: LogEntry[]
