@@ -73,14 +73,16 @@ function getDotStyle(dot: number, value: number): Record<string, string> {
 .dice-container {
   display: flex;
   align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  justify-content: center;
 }
 
 .die {
-  width: 56px;
-  height: 56px;
+  width: 42px;
+  height: 42px;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -111,21 +113,21 @@ function getDotStyle(dot: number, value: number): Record<string, string> {
 }
 
 .die-face {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   position: relative;
 }
 
 .dot {
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   background: #333;
   border-radius: 50%;
 }
 
 .die-placeholder {
-  font-size: 20px;
+  font-size: 16px;
   color: #999;
   font-weight: bold;
 }
@@ -133,18 +135,19 @@ function getDotStyle(dot: number, value: number): Record<string, string> {
 .dice-rolling-text {
   color: #ffd700;
   font-weight: bold;
+  font-size: 12px;
   animation: pulse 0.5s infinite;
 }
 
 .dice-prompt {
   color: #aaa;
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .dice-double {
   color: #ffd700;
   font-weight: bold;
-  font-size: 13px;
+  font-size: 11px;
 }
 
 @keyframes pulse {

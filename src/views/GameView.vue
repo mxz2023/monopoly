@@ -24,16 +24,17 @@
         :myId="gameStore.playerId"
       />
 
-      <!-- 中间: 棋盘 -->
-      <GameBoard
-        :players="gameStore.players"
-        :properties="gameStore.properties"
-      >
-        <template #default>
-          <!-- 棋盘中心的游戏日志 -->
-          <GameLog :logs="gameStore.logs" />
-        </template>
-      </GameBoard>
+      <!-- 中间: 棋盘（随中间栏宽高拉伸，不必为正方形） -->
+      <div class="board-stage">
+        <GameBoard
+          :players="gameStore.players"
+          :properties="gameStore.properties"
+        >
+          <template #default>
+            <GameLog :logs="gameStore.logs" />
+          </template>
+        </GameBoard>
+      </div>
 
       <!-- 右侧: 操作面板 -->
       <ActionPanel
@@ -156,15 +157,16 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 20px;
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 22px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
 }
 
 .room-info {
-  color: #aaa;
-  font-size: 13px;
+  color: #c8cdd8;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .room-code {
@@ -175,12 +177,13 @@ onMounted(() => {
 
 .turn-info {
   margin-left: 16px;
-  color: #888;
+  color: #9aa0b4;
+  font-size: 15px;
 }
 
 .current-turn {
-  color: #ddd;
-  font-size: 14px;
+  color: #e8eaf0;
+  font-size: 17px;
 }
 
 .current-turn-label {
@@ -195,9 +198,10 @@ onMounted(() => {
 .my-turn-badge {
   background: #2ecc71;
   color: #fff;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
   margin-left: 8px;
   animation: pulse 1.5s infinite;
 }
@@ -210,11 +214,12 @@ onMounted(() => {
 .btn-leave {
   background: rgba(231, 76, 60, 0.2);
   color: #e74c3c;
-  border: 1px solid rgba(231, 76, 60, 0.3);
-  padding: 6px 14px;
-  border-radius: 6px;
+  border: 1px solid rgba(231, 76, 60, 0.35);
+  padding: 8px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 600;
   transition: all 0.2s;
 }
 
@@ -225,11 +230,23 @@ onMounted(() => {
 .game-layout {
   flex: 1;
   display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 10px;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.board-stage {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 12px;
-  min-height: 0;
+  overflow: hidden;
 }
 
 .game-over-overlay {

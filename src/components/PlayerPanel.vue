@@ -50,11 +50,12 @@ function playerProperties(playerId: number): Property[] {
 
 <style scoped>
 .player-panel {
-  width: 200px;
+  width: 176px;
+  flex-shrink: 0;
   background: rgba(20, 20, 40, 0.95);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 8px;
   max-height: 100%;
   overflow-y: auto;
 }
@@ -62,15 +63,16 @@ function playerProperties(playerId: number): Property[] {
 .panel-title {
   color: #ffd700;
   font-size: 14px;
-  margin: 0 0 10px;
+  font-weight: 700;
+  margin: 0 0 8px;
   text-align: center;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
 }
 
 .player-card {
-  padding: 8px;
-  border-radius: 6px;
-  margin-bottom: 6px;
+  padding: 6px 6px;
+  border-radius: 5px;
+  margin-bottom: 5px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid transparent;
   transition: all 0.2s;
@@ -92,49 +94,58 @@ function playerProperties(playerId: number): Property[] {
 .player-header {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   margin-bottom: 4px;
+  min-width: 0;
 }
 
 .player-avatar {
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .player-name {
-  color: #ddd;
-  font-size: 12px;
-  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  color: #e8eaf0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .me-badge {
   background: #3498db;
   color: #fff;
-  font-size: 10px;
-  padding: 1px 4px;
-  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .jail-badge {
   background: #e67e22;
   color: #fff;
-  font-size: 9px;
-  padding: 1px 3px;
-  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .bankrupt-badge {
   background: #e74c3c;
   color: #fff;
-  font-size: 9px;
-  padding: 1px 3px;
-  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .player-money {
   color: #2ecc71;
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 2px;
 }
 
 .player-properties {

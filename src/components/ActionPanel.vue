@@ -140,24 +140,26 @@ const ownerName = computed(() => {
 
 <style scoped>
 .action-panel {
-  width: 220px;
+  width: 198px;
+  flex-shrink: 0;
   background: rgba(20, 20, 40, 0.95);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 8px;
   max-height: 100%;
   overflow-y: auto;
 }
 
 .action-section {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .section-label {
-  color: rgba(255, 215, 0, 0.8);
+  color: rgba(255, 215, 0, 0.9);
   font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.05em;
   margin-bottom: 6px;
 }
 
@@ -169,29 +171,32 @@ const ownerName = computed(() => {
 
 .prop-name {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 800;
   margin-bottom: 2px;
+  line-height: 1.2;
 }
 
 .prop-detail {
-  font-size: 11px;
-  color: #aaa;
+  font-size: 12px;
+  color: #b8bdd0;
+  line-height: 1.35;
 }
 
 .prop-owner {
-  font-size: 11px;
+  font-size: 12px;
   color: #2ecc71;
   margin-top: 2px;
+  font-weight: 600;
 }
 
 .btn {
   display: block;
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border: none;
   border-radius: 6px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
   margin-bottom: 6px;
@@ -217,7 +222,7 @@ const ownerName = computed(() => {
 
 .btn-warning {
   background: linear-gradient(135deg, #e67e22, #d35400);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .jail-actions {
@@ -257,7 +262,12 @@ const ownerName = computed(() => {
 
 .prop-name-mini {
   font-size: 11px;
-  color: #ddd;
+  font-weight: 600;
+  color: #e8eaf0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
 }
 
 .prop-build {

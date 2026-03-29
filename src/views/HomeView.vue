@@ -65,31 +65,34 @@
         </div>
 
         <div class="form-card">
-          <div class="input-group">
-            <label>选择头像</label>
-            <div class="avatar-grid">
-              <div
-                v-for="(avatar, idx) in AVATARS"
-                :key="idx"
-                class="avatar-option"
-                :class="{ selected: selectedAvatar === avatar }"
-                @click="selectedAvatar = avatar"
-              >
-                {{ avatar }}
+          <div class="lobby-body" :class="{ 'has-join': showJoin }">
+            <div class="lobby-primary">
+              <div class="input-group">
+                <label>选择头像</label>
+                <div class="avatar-grid">
+                  <div
+                    v-for="(avatar, idx) in AVATARS"
+                    :key="idx"
+                    class="avatar-option"
+                    :class="{ selected: selectedAvatar === avatar }"
+                    @click="selectedAvatar = avatar"
+                  >
+                    {{ avatar }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="btn-group">
+                <button class="btn btn-primary" @click="createRoom">
+                  创建房间
+                </button>
+                <button class="btn btn-secondary" @click="toggleJoin">
+                  加入房间
+                </button>
               </div>
             </div>
-          </div>
 
-          <div class="btn-group">
-            <button class="btn btn-primary" @click="createRoom">
-              创建房间
-            </button>
-            <button class="btn btn-secondary" @click="toggleJoin">
-              加入房间
-            </button>
-          </div>
-
-          <div v-if="showJoin" class="join-form">
+            <div v-if="showJoin" class="lobby-secondary join-form">
             <div class="room-list-header">
               <label>当前房间</label>
               <button class="refresh-btn" @click="fetchRoomList" title="刷新">
@@ -143,6 +146,7 @@
             <button class="btn btn-primary btn-block" @click="joinRoom" :disabled="!roomId.trim()">
               加入
             </button>
+            </div>
           </div>
         </div>
       </div>
@@ -320,39 +324,46 @@ function joinRoom() {
 
 <style scoped>
 .home-view {
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .home-bg {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   background: radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1a 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: clamp(16px, 3vh, 32px) clamp(12px, 3vw, 40px);
+  box-sizing: border-box;
 }
 
 .home-content {
   text-align: center;
-  max-width: 400px;
-  width: 90%;
+  width: 100%;
+  max-width: min(1320px, 100%);
+  margin: 0 auto;
 }
 
 .game-title {
-  font-size: 64px;
+  font-size: clamp(48px, 8vw, 76px);
   color: #ffd700;
   text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
   margin: 0;
   letter-spacing: 12px;
+  line-height: 1.1;
 }
 
 .game-subtitle {
-  color: rgba(255, 215, 0, 0.5);
-  letter-spacing: 8px;
-  font-size: 16px;
-  margin: 8px 0 24px;
+  color: rgba(255, 215, 0, 0.55);
+  letter-spacing: 6px;
+  font-size: clamp(15px, 2.4vw, 19px);
+  margin: 10px 0 28px;
+  font-weight: 500;
 }
 
 .account-bar {
@@ -360,60 +371,65 @@ function joinRoom() {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 12px 14px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  border-radius: 10px;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 215, 0, 0.22);
+  border-radius: 12px;
   text-align: left;
 }
 .account-info {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  color: #ccc;
+  gap: 14px;
+  font-size: 16px;
+  color: #d8d8e8;
 }
 .account-user {
   color: #ffd700;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 17px;
 }
 .char-label {
   display: inline;
-  color: #888;
-  font-size: 12px;
-  margin-left: 4px;
+  color: #9aa0b4;
+  font-size: 15px;
+  margin-left: 2px;
 }
 .char-select {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 215, 0, 0.25);
-  background: rgba(0, 0, 0, 0.35);
-  color: #eee;
-  font-size: 14px;
-  max-width: 140px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 215, 0, 0.28);
+  background: rgba(0, 0, 0, 0.4);
+  color: #f0f0f5;
+  font-size: 16px;
+  max-width: 160px;
 }
 .char-select:focus {
   outline: none;
   border-color: #ffd700;
 }
 .account-meta {
-  color: #aaa;
+  color: #b8bdd0;
+  font-size: 16px;
+  font-weight: 500;
 }
 .account-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-end;
 }
 .link-btn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #3498db;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #5dade2;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
 }
 .link-btn:hover {
@@ -439,15 +455,16 @@ function joinRoom() {
 .nick-dialog {
   background: rgba(30, 30, 60, 0.98);
   border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 14px;
+  padding: 22px;
   width: 90%;
-  max-width: 320px;
+  max-width: 360px;
 }
 .nick-dialog h3 {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   color: #ffd700;
-  font-size: 16px;
+  font-size: 19px;
+  font-weight: 700;
 }
 .nick-dialog-btns {
   display: flex;
@@ -459,33 +476,65 @@ function joinRoom() {
 }
 
 .form-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 32px;
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: clamp(24px, 3vw, 40px);
+  backdrop-filter: blur(12px);
+}
+
+.lobby-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  text-align: left;
+}
+
+.lobby-body .lobby-primary {
+  text-align: center;
+}
+
+@media (min-width: 900px) {
+  .lobby-body.has-join {
+    flex-direction: row;
+    align-items: stretch;
+    gap: clamp(20px, 3vw, 40px);
+  }
+  .lobby-body.has-join .lobby-primary {
+    flex: 0 0 min(400px, 38%);
+    text-align: center;
+  }
+  .lobby-body.has-join .lobby-secondary {
+    flex: 1;
+    min-width: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding-left: clamp(20px, 3vw, 36px);
+    margin-top: 0;
+    padding-top: 0;
+  }
 }
 
 .input-group {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   text-align: left;
 }
 
 .input-group label {
   display: block;
-  color: #aaa;
-  font-size: 13px;
-  margin-bottom: 6px;
+  color: #c4c8d8;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .input {
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+  border-radius: 10px;
   color: #fff;
-  font-size: 15px;
+  font-size: 17px;
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
@@ -506,12 +555,12 @@ function joinRoom() {
 }
 
 .avatar-option {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 26px;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
@@ -540,11 +589,11 @@ function joinRoom() {
 
 .btn {
   flex: 1;
-  padding: 12px;
+  padding: 14px 16px;
   border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -579,6 +628,14 @@ function joinRoom() {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+@media (min-width: 900px) {
+  .lobby-body.has-join .join-form {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
 .room-list-header {
   display: flex;
   justify-content: space-between;
@@ -588,18 +645,19 @@ function joinRoom() {
 
 .room-list-header label {
   display: block;
-  color: #aaa;
-  font-size: 13px;
+  color: #c4c8d8;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .refresh-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #aaa;
-  border-radius: 6px;
-  padding: 4px 10px;
+  color: #c8c8d8;
+  border-radius: 8px;
+  padding: 6px 12px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 18px;
   transition: all 0.2s;
 }
 
@@ -610,15 +668,34 @@ function joinRoom() {
 
 .no-rooms {
   text-align: center;
-  color: #666;
-  padding: 20px 0;
-  font-size: 14px;
+  color: #8a90a4;
+  padding: 22px 0;
+  font-size: 16px;
 }
 
 .room-list {
-  max-height: 200px;
+  max-height: min(320px, 42vh);
   overflow-y: auto;
   margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+@media (min-width: 720px) {
+  .room-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    max-height: min(380px, 48vh);
+  }
+}
+
+@media (min-width: 1100px) {
+  .room-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-height: min(420px, 52vh);
+  }
 }
 
 .room-item {
@@ -629,7 +706,6 @@ function joinRoom() {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
-  margin-bottom: 6px;
   transition: all 0.2s;
 }
 
@@ -645,13 +721,14 @@ function joinRoom() {
 
 .room-id {
   color: #ffd700;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.04em;
 }
 
 .room-host {
-  color: #888;
-  font-size: 12px;
+  color: #a8b0c4;
+  font-size: 14px;
 }
 
 .room-meta {
@@ -661,13 +738,14 @@ function joinRoom() {
 }
 
 .room-count {
-  color: #aaa;
-  font-size: 13px;
+  color: #c4c8d8;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .room-tag {
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 12px;
+  padding: 3px 10px;
   border-radius: 10px;
   font-weight: 500;
 }
@@ -688,13 +766,13 @@ function joinRoom() {
 }
 
 .enter-btn {
-  padding: 4px 14px;
+  padding: 6px 16px;
   background: linear-gradient(135deg, #ffd700, #ffaa00);
   color: #1a1a3e;
   border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
@@ -732,8 +810,8 @@ function joinRoom() {
   position: relative;
   background: rgba(255, 255, 255, 0.03);
   padding: 0 10px;
-  color: #555;
-  font-size: 12px;
+  color: #7a8194;
+  font-size: 14px;
 }
 
 .btn-block {

@@ -134,21 +134,22 @@ onUnmounted(() => {
 
 .room-header {
   color: #ffd700;
-  font-size: 28px;
-  margin: 0 0 16px;
+  font-size: clamp(26px, 4vw, 34px);
+  font-weight: 800;
+  margin: 0 0 18px;
   letter-spacing: 4px;
 }
 
 .room-id {
-  color: #aaa;
-  font-size: 14px;
+  color: #b8bdd0;
+  font-size: 17px;
   margin-bottom: 30px;
 }
 
 .room-code {
   color: #ffd700;
-  font-size: 24px;
-  font-weight: bold;
+  font-size: clamp(22px, 4vw, 28px);
+  font-weight: 800;
   letter-spacing: 4px;
 }
 
@@ -195,26 +196,28 @@ onUnmounted(() => {
 
 .player-name {
   flex: 1;
-  color: #ddd;
-  font-size: 15px;
+  color: #e8eaf0;
+  font-size: 17px;
+  font-weight: 600;
   text-align: left;
 }
 
 .host-tag {
   background: #ffd700;
   color: #1a1a3e;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: bold;
+  font-size: 13px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 800;
 }
 
 .me-tag {
   background: #3498db;
   color: #fff;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
 }
 
 .ready-status {
@@ -228,11 +231,11 @@ onUnmounted(() => {
 }
 
 .btn {
-  padding: 12px;
+  padding: 14px 16px;
   border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }

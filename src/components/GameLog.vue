@@ -35,21 +35,23 @@ watch(() => props.logs.length, async () => {
 
 <style scoped>
 .game-log {
-  width: 220px;
+  width: 100%;
+  max-width: 200px;
   background: rgba(20, 20, 40, 0.95);
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 12px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
 }
 
 .log-title {
-  color: rgba(255, 215, 0, 0.8);
-  font-size: 11px;
+  color: rgba(255, 215, 0, 0.9);
+  font-size: 13px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin: 0 0 8px;
+  letter-spacing: 0.06em;
+  margin: 0 0 10px;
 }
 
 .log-list {
@@ -62,19 +64,21 @@ watch(() => props.logs.length, async () => {
 }
 
 .log-entry {
-  font-size: 11px;
-  padding: 3px 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.03);
+  font-size: 13px;
+  line-height: 1.35;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .log-time {
-  color: #666;
-  margin-right: 6px;
+  color: #7a8194;
+  margin-right: 8px;
+  font-size: 12px;
 }
 
 .log-message {
-  color: #aaa;
+  color: #c8cdd8;
 }
 
 .log-buy .log-message { color: #2ecc71; }
