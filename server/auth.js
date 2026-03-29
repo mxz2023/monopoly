@@ -9,12 +9,48 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const DB_PATH = join(__dirname, 'data', 'account.json')
 const JWT_SECRET = process.env.JWT_SECRET || 'monopoly-dev-secret-change-me'
 const INITIAL_MONEY = 15000
+const MAX_CHARACTERS_PER_USER = 20
 
 function readDb() {
   if (!fs.existsSync(DB_PATH)) {
-    return { users: [], nextId: 1 }
+    return { users: [], characters: [], nextId: 1, nextCharacterId: 1 }
   }
-  return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'))
+  const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'))
+  return migrateDb(db)
+}
+
+function migrateDb(db) {
+  if (!Array.isArray(db.users)) db.users = []
+  if (!Array.isArray(db.characters)) db.characters = []
+  if (typeof db.nextId !== 'number') db.nextId = 1
+  if (typeof db.nextCharacterId !== 'number') {
+    const max = db.characters.reduce((m, c) => Math.max(m, c.id || 0), 0)
+    db.nextCharacterId = max + 1 || 1
+  }
+  let changed = false
+  for (const u of db.users) {
+    const legacy = u.nickname !== undefined || u.money !== undefined || u.properties !== undefined
+    if (legacy) {
+      const hasChar = db.characters.some((c) => c.userId === u.id)
+      if (!hasChar) {
+        db.characters.push({
+          id: db.nextCharacterId++,
+          userId: u.id,
+          nickname: String(u.nickname || `玩家${u.id}`).slice(0, 8),
+          money: typeof u.money === 'number' ? u.money : INITIAL_MONEY,
+          properties: Array.isArray(u.properties) ? [...new Set(u.properties)] : [],
+          updatedAt: Date.now(),
+        })
+        changed = true
+      }
+      delete u.nickname
+      delete u.money
+      delete u.properties
+      changed = true
+    }
+  }
+  if (changed) writeDb(db)
+  return db
 }
 
 function writeDb(db) {
@@ -62,33 +98,73 @@ export function verifyTokenGetUser(token) {
   return user
 }
 
+export function getCharacterById(characterId) {
+  const db = readDb()
+  return db.characters.find((c) => c.id === characterId) ?? null
+}
+
+export function getCharactersByUserId(userId) {
+  const db = readDb()
+  return db.characters.filter((c) => c.userId === userId)
+}
+
+/** 校验角色属于当前用户，返回角色文档 */
+export function verifyCharacterForUser(token, characterId) {
+  const user = verifyTokenGetUser(token)
+  if (!characterId || Number.isNaN(Number(characterId))) {
+    throw new Error('请选择角色')
+  }
+  const cid = Number(characterId)
+  const ch = getCharacterById(cid)
+  if (!ch || ch.userId !== user.id) {
+    throw new Error('角色无效')
+  }
+  return { user, character: ch }
+}
+
 export function userToPublic(user) {
   return {
     id: user.id,
     username: user.username,
-    nickname: user.nickname,
-    money: typeof user.money === 'number' ? user.money : INITIAL_MONEY,
-    properties: Array.isArray(user.properties) ? user.properties : [],
   }
 }
 
-export function saveUserProgress(userId, { money, properties }) {
+export function characterToPublic(c) {
+  return {
+    id: c.id,
+    userId: c.userId,
+    nickname: c.nickname,
+    money: typeof c.money === 'number' ? c.money : INITIAL_MONEY,
+    properties: Array.isArray(c.properties) ? c.properties : [],
+  }
+}
+
+export function saveCharacterProgress(characterId, { money, properties }) {
   const db = readDb()
-  const u = db.users.find((x) => x.id === userId)
-  if (!u) return
-  u.money = money
-  u.properties = [...new Set(properties)]
-  u.updatedAt = Date.now()
+  const c = db.characters.find((x) => x.id === characterId)
+  if (!c) return
+  c.money = money
+  c.properties = [...new Set(properties)]
+  c.updatedAt = Date.now()
   writeDb(db)
 }
 
-export function loadUserProgress(userId) {
-  const u = getUserById(userId)
-  if (!u) return { money: INITIAL_MONEY, properties: [] }
+export function loadCharacterProgress(characterId) {
+  const c = getCharacterById(characterId)
+  if (!c) return { money: INITIAL_MONEY, properties: [] }
   return {
-    money: typeof u.money === 'number' ? u.money : INITIAL_MONEY,
-    properties: Array.isArray(u.properties) ? [...new Set(u.properties)] : [],
+    money: typeof c.money === 'number' ? c.money : INITIAL_MONEY,
+    properties: Array.isArray(c.properties) ? [...new Set(c.properties)] : [],
   }
+}
+
+/** @deprecated 兼容旧 engine 引用名 */
+export function saveUserProgress(id, payload) {
+  saveCharacterProgress(id, payload)
+}
+
+export function loadUserProgress(id) {
+  return loadCharacterProgress(id)
 }
 
 function authHeaderUserId(req) {
@@ -103,7 +179,6 @@ function authHeaderUserId(req) {
 
 export const authRouter = express.Router()
 
-/** 供前端检测后端是否已启动（不走复杂中间件） */
 authRouter.get('/health', (_req, res) => {
   res.json({ ok: true })
 })
@@ -121,7 +196,7 @@ authRouter.post('/register', (req, res) => {
     return res.status(400).json({ error: '密码至少 6 位' })
   }
   if (!nick) {
-    return res.status(400).json({ error: '请填写昵称' })
+    return res.status(400).json({ error: '请填写首个角色昵称' })
   }
 
   const db = readDb()
@@ -134,16 +209,27 @@ authRouter.post('/register', (req, res) => {
     id,
     username: u,
     passwordHash: hashPassword(p),
+    updatedAt: Date.now(),
+  }
+  db.users.push(user)
+
+  const char = {
+    id: db.nextCharacterId++,
+    userId: id,
     nickname: nick,
     money: INITIAL_MONEY,
     properties: [],
     updatedAt: Date.now(),
   }
-  db.users.push(user)
+  db.characters.push(char)
   writeDb(db)
 
   const token = signToken(id)
-  res.json({ token, user: userToPublic(user) })
+  res.json({
+    token,
+    user: userToPublic(user),
+    characters: [characterToPublic(char)],
+  })
 })
 
 authRouter.post('/login', (req, res) => {
@@ -157,8 +243,12 @@ authRouter.post('/login', (req, res) => {
     return res.status(401).json({ error: '用户名或密码错误' })
   }
 
+  const chars = db.characters
+    .filter((c) => c.userId === user.id)
+    .map(characterToPublic)
+
   const token = signToken(user.id)
-  res.json({ token, user: userToPublic(user) })
+  res.json({ token, user: userToPublic(user), characters: chars })
 })
 
 authRouter.get('/me', (req, res) => {
@@ -166,21 +256,74 @@ authRouter.get('/me', (req, res) => {
   if (!id) return res.status(401).json({ error: '未登录' })
   const user = getUserById(id)
   if (!user) return res.status(401).json({ error: '用户不存在' })
-  res.json({ user: userToPublic(user) })
+  const db = readDb()
+  const characters = db.characters.filter((c) => c.userId === id).map(characterToPublic)
+  res.json({ user: userToPublic(user), characters })
 })
 
-authRouter.patch('/me', (req, res) => {
-  const id = authHeaderUserId(req)
-  if (!id) return res.status(401).json({ error: '未登录' })
+authRouter.post('/characters', (req, res) => {
+  const userId = authHeaderUserId(req)
+  if (!userId) return res.status(401).json({ error: '未登录' })
+
+  const { nickname } = req.body || {}
+  const nick = String(nickname || '').trim().slice(0, 8)
+  if (!nick) return res.status(400).json({ error: '请填写角色昵称' })
+
+  const db = readDb()
+  const mine = db.characters.filter((c) => c.userId === userId)
+  if (mine.length >= MAX_CHARACTERS_PER_USER) {
+    return res.status(400).json({ error: `每个账号最多 ${MAX_CHARACTERS_PER_USER} 个角色` })
+  }
+  if (mine.some((c) => c.nickname === nick)) {
+    return res.status(400).json({ error: '已有同名角色' })
+  }
+
+  const char = {
+    id: db.nextCharacterId++,
+    userId,
+    nickname: nick,
+    money: INITIAL_MONEY,
+    properties: [],
+    updatedAt: Date.now(),
+  }
+  db.characters.push(char)
+  writeDb(db)
+  res.json({ character: characterToPublic(char) })
+})
+
+authRouter.patch('/characters/:id', (req, res) => {
+  const userId = authHeaderUserId(req)
+  if (!userId) return res.status(401).json({ error: '未登录' })
+  const cid = Number(req.params.id)
   const { nickname } = req.body || {}
   const nick = String(nickname || '').trim().slice(0, 8)
   if (!nick) return res.status(400).json({ error: '昵称不能为空' })
 
   const db = readDb()
-  const user = db.users.find((x) => x.id === id)
-  if (!user) return res.status(404).json({ error: '用户不存在' })
-  user.nickname = nick
-  user.updatedAt = Date.now()
+  const c = db.characters.find((x) => x.id === cid && x.userId === userId)
+  if (!c) return res.status(404).json({ error: '角色不存在' })
+  if (db.characters.some((x) => x.userId === userId && x.id !== cid && x.nickname === nick)) {
+    return res.status(400).json({ error: '已有同名角色' })
+  }
+  c.nickname = nick
+  c.updatedAt = Date.now()
   writeDb(db)
-  res.json({ user: userToPublic(user) })
+  res.json({ character: characterToPublic(c) })
+})
+
+authRouter.delete('/characters/:id', (req, res) => {
+  const userId = authHeaderUserId(req)
+  if (!userId) return res.status(401).json({ error: '未登录' })
+  const cid = Number(req.params.id)
+
+  const db = readDb()
+  const mine = db.characters.filter((c) => c.userId === userId)
+  if (mine.length <= 1) {
+    return res.status(400).json({ error: '至少保留一个角色' })
+  }
+  const idx = db.characters.findIndex((x) => x.id === cid && x.userId === userId)
+  if (idx < 0) return res.status(404).json({ error: '角色不存在' })
+  db.characters.splice(idx, 1)
+  writeDb(db)
+  res.json({ ok: true })
 })

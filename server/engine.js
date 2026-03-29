@@ -1,6 +1,10 @@
 import { WebSocket } from 'ws'
 import { MAP_DATA, CHANCE_CARDS, CHEST_CARDS, TOTAL_CELLS, JAIL_POS, GO_TO_JAIL_POS, PLAYER_AVATARS } from './data.js'
-import { verifyTokenGetUser, loadUserProgress, saveUserProgress } from './auth.js'
+import {
+  verifyCharacterForUser,
+  loadCharacterProgress,
+  saveCharacterProgress,
+} from './auth.js'
 
 // ---- Game Engine ----
 
@@ -8,25 +12,26 @@ export const rooms = new Map()
 
 function persistPlayerProgress(player) {
   if (!player) return
+  const cid = player.characterId ?? player.id
   if (player.status === 'bankrupt') {
-    saveUserProgress(player.id, { money: 0, properties: [] })
+    saveCharacterProgress(cid, { money: 0, properties: [] })
     return
   }
-  saveUserProgress(player.id, {
+  saveCharacterProgress(cid, {
     money: Math.max(0, player.money),
     properties: [...player.properties],
   })
 }
 
-function findUserInAnyRoom(userId) {
+function findCharacterInAnyRoom(characterId) {
   for (const [, room] of rooms) {
-    const p = room.players.find((x) => x.id === userId)
+    const p = room.players.find((x) => x.id === characterId)
     if (p) return { room, player: p }
   }
   return null
 }
 
-/** 新一局开始：从起点出发，按账户载入资金与产业（棋盘格与玩家列表一致） */
+/** 新一局开始：从起点出发，按各角色存档载入资金与产业（棋盘格与玩家列表一致） */
 function applyAccountStateToRoom(room) {
   for (const p of room.properties) {
     p.ownerId = null
@@ -35,7 +40,7 @@ function applyAccountStateToRoom(room) {
     p.mortgage = false
   }
   for (const player of room.players) {
-    const saved = loadUserProgress(player.id)
+    const saved = loadCharacterProgress(player.characterId ?? player.id)
     player.money = saved.money
     player.properties = []
     player.position = 0
@@ -541,23 +546,27 @@ export function routeMessage(ws, msg) {
     }
     case 'create_room': {
       let user
+      let character
       try {
-        user = verifyTokenGetUser(msg.token)
-      } catch {
-        ws.send(JSON.stringify({ type: 'error', message: '请先登录' }))
+        const v = verifyCharacterForUser(msg.token, msg.characterId)
+        user = v.user
+        character = v.character
+      } catch (e) {
+        ws.send(JSON.stringify({ type: 'error', message: e.message || '请先登录并选择角色' }))
         return
       }
-      if (findUserInAnyRoom(user.id)) {
-        ws.send(JSON.stringify({ type: 'error', message: '请先离开当前房间' }))
+      if (findCharacterInAnyRoom(character.id)) {
+        ws.send(JSON.stringify({ type: 'error', message: '该角色已在房间中，请先离开' }))
         return
       }
       const room = createRoom()
-      const progress = loadUserProgress(user.id)
+      const progress = loadCharacterProgress(character.id)
       const player = {
-        id: user.id,
+        id: character.id,
         userId: user.id,
-        name: user.nickname,
-        avatar: msg.avatar || PLAYER_AVATARS[(user.id - 1) % PLAYER_AVATARS.length],
+        characterId: character.id,
+        name: character.nickname,
+        avatar: msg.avatar || PLAYER_AVATARS[(character.id - 1) % PLAYER_AVATARS.length],
         money: progress.money,
         position: 0,
         properties: [],
@@ -568,7 +577,7 @@ export function routeMessage(ws, msg) {
         ws,
       }
       room.players.push(player)
-      room.hostId = user.id
+      room.hostId = character.id
       ws.send(JSON.stringify({
         type: 'room_created',
         roomId: room.id,
@@ -581,14 +590,17 @@ export function routeMessage(ws, msg) {
 
     case 'join_room': {
       let user
+      let character
       try {
-        user = verifyTokenGetUser(msg.token)
-      } catch {
-        ws.send(JSON.stringify({ type: 'error', message: '请先登录' }))
+        const v = verifyCharacterForUser(msg.token, msg.characterId)
+        user = v.user
+        character = v.character
+      } catch (e) {
+        ws.send(JSON.stringify({ type: 'error', message: e.message || '请先登录并选择角色' }))
         return
       }
-      if (findUserInAnyRoom(user.id)) {
-        ws.send(JSON.stringify({ type: 'error', message: '请先离开当前房间' }))
+      if (findCharacterInAnyRoom(character.id)) {
+        ws.send(JSON.stringify({ type: 'error', message: '该角色已在房间中，请先离开' }))
         return
       }
       const room = rooms.get(msg.roomId)
@@ -604,12 +616,13 @@ export function routeMessage(ws, msg) {
         ws.send(JSON.stringify({ type: 'error', message: '房间已满' }))
         return
       }
-      const progress = loadUserProgress(user.id)
+      const progress = loadCharacterProgress(character.id)
       const player = {
-        id: user.id,
+        id: character.id,
         userId: user.id,
-        name: user.nickname,
-        avatar: msg.avatar || PLAYER_AVATARS[(user.id - 1) % PLAYER_AVATARS.length],
+        characterId: character.id,
+        name: character.nickname,
+        avatar: msg.avatar || PLAYER_AVATARS[(character.id - 1) % PLAYER_AVATARS.length],
         money: progress.money,
         position: 0,
         properties: [],
@@ -651,7 +664,7 @@ export function routeMessage(ws, msg) {
         currentRoom.status = 'playing'
         currentRoom.phase = 'roll'
         applyAccountStateToRoom(currentRoom)
-        addLog(currentRoom, '游戏开始！已从起点出发，资金与产业已按账户载入。', 'info')
+        addLog(currentRoom, '游戏开始！已从起点出发，资金与产业已按各角色存档载入。', 'info')
         addLog(currentRoom, `轮到 ${currentRoom.players[0].name} 掷骰子`, 'info')
         broadcast(currentRoom)
         console.log(`Game started in room ${currentRoom.id}`)

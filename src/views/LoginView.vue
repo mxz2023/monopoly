@@ -3,7 +3,7 @@
     <div class="auth-bg">
       <div class="auth-card">
         <h1 class="title">登录</h1>
-        <p class="subtitle">登录后可创建/加入房间，资产与产业会保存在账户中</p>
+        <p class="subtitle">登录后可创建/加入房间；资金与产业按「角色」保存，同一账号可建多个角色。</p>
 
         <div v-if="backendOk === false" class="backend-warning">
           <strong>无法连接游戏服务</strong>

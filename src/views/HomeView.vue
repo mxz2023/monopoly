@@ -7,19 +7,55 @@
 
         <div class="account-bar">
           <div class="account-info">
-            <span class="account-nick">{{ auth.user?.nickname }}</span>
-            <span class="account-meta">💰 {{ auth.user?.money ?? 0 }}</span>
-            <span class="account-meta">🏠 {{ auth.user?.properties?.length ?? 0 }} 处产业</span>
+            <span class="account-user">{{ auth.user?.username }}</span>
+            <label class="char-label">当前角色</label>
+            <select
+              class="char-select"
+              :value="auth.selectedCharacterId"
+              @change="onCharacterChange"
+            >
+              <option v-for="c in auth.characters" :key="c.id" :value="c.id">
+                {{ c.nickname }}
+              </option>
+            </select>
+            <span class="account-meta">💰 {{ auth.selectedCharacter?.money ?? 0 }}</span>
+            <span class="account-meta">🏠 {{ auth.selectedCharacter?.properties?.length ?? 0 }} 处产业</span>
           </div>
           <div class="account-actions">
+            <button type="button" class="link-btn" @click="openNewChar">新建角色</button>
             <button type="button" class="link-btn" @click="openNickEdit">改昵称</button>
+            <button
+              v-if="auth.characters.length > 1"
+              type="button"
+              class="link-btn danger"
+              @click="deleteCurrentCharacter"
+            >
+              删除角色
+            </button>
             <button type="button" class="link-btn logout" @click="doLogout">退出登录</button>
+          </div>
+        </div>
+
+        <div v-if="newCharDialog" class="nick-dialog-overlay" @click.self="newCharDialog = false">
+          <div class="nick-dialog">
+            <h3>新建角色</h3>
+            <input
+              v-model="newCharDraft"
+              class="input"
+              maxlength="8"
+              placeholder="角色昵称，最多 8 字"
+              @keyup.enter="saveNewCharacter"
+            />
+            <div class="nick-dialog-btns">
+              <button class="btn btn-secondary" type="button" @click="newCharDialog = false">取消</button>
+              <button class="btn btn-primary" type="button" @click="saveNewCharacter">创建</button>
+            </div>
           </div>
         </div>
 
         <div v-if="nickDialog" class="nick-dialog-overlay" @click.self="nickDialog = false">
           <div class="nick-dialog">
-            <h3>修改游戏昵称</h3>
+            <h3>修改角色昵称</h3>
             <input v-model="nickDraft" class="input" maxlength="8" placeholder="最多 8 字" @keyup.enter="saveNickname" />
             <div class="nick-dialog-btns">
               <button class="btn btn-secondary" type="button" @click="nickDialog = false">取消</button>
@@ -130,24 +166,58 @@ const auth = useAuthStore()
 const selectedAvatar = ref(localStorage.getItem('monopoly_avatar') || AVATARS[0])
 const nickDialog = ref(false)
 const nickDraft = ref('')
+const newCharDialog = ref(false)
+const newCharDraft = ref('')
 
 onMounted(() => {
   auth.fetchMe()
 })
 
+function onCharacterChange(e: Event) {
+  const v = Number((e.target as HTMLSelectElement).value)
+  if (!Number.isNaN(v)) auth.setSelectedCharacterId(v)
+}
+
+function openNewChar() {
+  newCharDraft.value = ''
+  newCharDialog.value = true
+}
+
+async function saveNewCharacter() {
+  const n = newCharDraft.value.trim().slice(0, 8)
+  if (!n) return
+  try {
+    await auth.createCharacter(n)
+    newCharDialog.value = false
+  } catch (e: unknown) {
+    alert(e instanceof Error ? e.message : '创建失败')
+  }
+}
+
 function openNickEdit() {
-  nickDraft.value = auth.user?.nickname ?? ''
+  nickDraft.value = auth.selectedCharacter?.nickname ?? ''
   nickDialog.value = true
 }
 
 async function saveNickname() {
   const n = nickDraft.value.trim().slice(0, 8)
-  if (!n) return
+  if (!n || !auth.selectedCharacter) return
   try {
-    await auth.updateNickname(n)
+    await auth.updateCharacterNickname(auth.selectedCharacter.id, n)
     nickDialog.value = false
   } catch (e: unknown) {
     alert(e instanceof Error ? e.message : '保存失败')
+  }
+}
+
+async function deleteCurrentCharacter() {
+  const c = auth.selectedCharacter
+  if (!c || auth.characters.length <= 1) return
+  if (!confirm(`确定删除角色「${c.nickname}」？存档将一并删除。`)) return
+  try {
+    await auth.deleteCharacter(c.id)
+  } catch (e: unknown) {
+    alert(e instanceof Error ? e.message : '删除失败')
   }
 }
 
@@ -197,6 +267,10 @@ function quickJoin(room: { roomId: string; status: string; playerCount: number; 
 }
 
 function createRoom() {
+  if (!auth.selectedCharacterId) {
+    alert('请先创建或选择一个角色')
+    return
+  }
   localStorage.setItem('monopoly_avatar', selectedAvatar.value)
 
   wsService.connect(getWebSocketUrl())
@@ -217,6 +291,10 @@ function createRoom() {
 
 function joinRoom() {
   if (!roomId.value.trim()) return
+  if (!auth.selectedCharacterId) {
+    alert('请先创建或选择一个角色')
+    return
+  }
   localStorage.setItem('monopoly_avatar', selectedAvatar.value)
 
   wsService.connect(getWebSocketUrl())
@@ -298,10 +376,29 @@ function joinRoom() {
   font-size: 13px;
   color: #ccc;
 }
-.account-nick {
+.account-user {
   color: #ffd700;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
+}
+.char-label {
+  display: inline;
+  color: #888;
+  font-size: 12px;
+  margin-left: 4px;
+}
+.char-select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  background: rgba(0, 0, 0, 0.35);
+  color: #eee;
+  font-size: 14px;
+  max-width: 140px;
+}
+.char-select:focus {
+  outline: none;
+  border-color: #ffd700;
 }
 .account-meta {
   color: #aaa;
@@ -325,6 +422,10 @@ function joinRoom() {
 .link-btn.logout {
   color: #e74c3c;
   border-color: rgba(231, 76, 60, 0.35);
+}
+.link-btn.danger {
+  color: #e67e22;
+  border-color: rgba(230, 126, 34, 0.35);
 }
 .nick-dialog-overlay {
   position: fixed;

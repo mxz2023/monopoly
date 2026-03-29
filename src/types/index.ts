@@ -1,7 +1,10 @@
 export interface Player {
+  /** 角色 id（房间内玩家唯一标识，与地产 ownerId 一致） */
   id: number
-  /** 与 id 相同，对应账户 userId */
+  /** 登录账号 id */
   userId?: number
+  /** 与 id 相同，便于区分语义 */
+  characterId?: number
   name: string
   avatar: string
   money: number

@@ -97,7 +97,16 @@ class WebSocketService {
 
   send(data: Record<string, any>) {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('monopoly_token') : null
-    const payload = token ? { ...data, token } : data
+    let extra: Record<string, unknown> = {}
+    if (token) extra.token = token
+    if (
+      (data.type === 'create_room' || data.type === 'join_room') &&
+      typeof localStorage !== 'undefined'
+    ) {
+      const cid = localStorage.getItem('monopoly_character_id')
+      if (cid) extra.characterId = Number(cid)
+    }
+    const payload = { ...data, ...extra }
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(payload))
     } else {

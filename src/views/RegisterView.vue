@@ -3,7 +3,7 @@
     <div class="auth-bg">
       <div class="auth-card">
         <h1 class="title">注册</h1>
-        <p class="subtitle">设置登录用户名与游戏中显示的昵称（进入房间时使用）</p>
+        <p class="subtitle">设置登录用户名与首个游戏昵称；之后可在首页新建更多角色。</p>
 
         <div v-if="error" class="error-msg">{{ error }}</div>
 

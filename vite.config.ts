@@ -1,5 +1,26 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import express from 'express'
+import { authRouter } from './server/auth.js'
+
+/** 在 Vite 进程内挂载 /api，避免仅开 dev 时代理到 8080 失败（404/502） */
+function monopolyApiMiddleware() {
+  const mount = () => {
+    const apiApp = express()
+    apiApp.use(express.json())
+    apiApp.use(authRouter)
+    return apiApp
+  }
+  return {
+    name: 'monopoly-api',
+    configureServer(server) {
+      server.middlewares.use('/api', mount())
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use('/api', mount())
+    },
+  }
+}
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -11,18 +32,10 @@ export default defineConfig(({ mode }) => {
     wsPort = '8080'
   }
   return {
-    plugins: [vue()],
+    plugins: [vue(), monopolyApiMiddleware()],
     server: {
       port: 3000,
       proxy: {
-        '/api': {
-          target: `http://127.0.0.1:${wsPort}`,
-          changeOrigin: true,
-          secure: false,
-          ws: false,
-          timeout: 20000,
-          proxyTimeout: 20000,
-        },
         '/ws': {
           target: `ws://127.0.0.1:${wsPort}`,
           ws: true,
@@ -32,14 +45,6 @@ export default defineConfig(({ mode }) => {
     preview: {
       port: 4173,
       proxy: {
-        '/api': {
-          target: `http://127.0.0.1:${wsPort}`,
-          changeOrigin: true,
-          secure: false,
-          ws: false,
-          timeout: 20000,
-          proxyTimeout: 20000,
-        },
         '/ws': {
           target: `ws://127.0.0.1:${wsPort}`,
           ws: true,
